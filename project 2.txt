@@ -1,0 +1,368 @@
+import module.studentdetails
+import module.subjects
+import module.dbconnection
+from tabulate import tabulate
+
+print("Hi... Please enter module id from below \n 1. Admin \n 2.Teacher")
+module_id = input("Type Module id and press Enter : ")
+from module import project2
+
+print("Hi... Please Enter Project Number from below \n 1. Project 1 \n 2. Project 2")
+project = input("Type Module id and press Enter : ")
+
+
+def add_student():
+@@ -16,7 +18,7 @@ def add_student():
+    class_name = input("Class Name : ")
+    section = input("Section : ")
+    student_details = module.studentdetails.StudentDetails(id, name, aadhar_card_number, parents_name, ph_number,
+                                                           class_name, section)
+                                                           class_name, section, None)
+    student_id = str(module.dbconnection.add_student(student_details))
+    print("Student Details Added Successfully with Student Id : " + student_id)
+
+@@ -36,8 +38,9 @@ def print_table_format(list):
+            temp.append(x.class_name)
+            temp.append(x.section)
+            data.append(temp)
+    print(tabulate(data, headers=["Student Id", "Student Name", "Aadhar Card Number", "Parents Name", "Phone Number",
+                                  "Class Name", "Section"]))
+        print(
+            tabulate(data, headers=["Student Id", "Student Name", "Aadhar Card Number", "Parents Name", "Phone Number",
+                                    "Class Name", "Section"]))
+
+
+def view_student():
+@@ -143,31 +146,40 @@ def filter_failed_students():
+    print(tabulate(data, headers=["Student Id", "Student Name", "Exam Type", "Math", "Science",
+                                  "Social", "Language"]))
+
+if module_id == "1":
+    print("You logged in as Admin User. Please select any one of the below options ")
+    print("1. Add student details \n2. View student details \n3. Update student details \n4. Delete student details")
+    option = input("Type Operation Id and press Enter : ")
+    if option == "1":
+        add_student()
+    elif option == "2":
+        view_student()
+    elif option == "3":
+        update_student()
+    elif option == "4":
+        delete_student()
+    else:
+        print("Invalid Option. Please try again later... Thank You !!!")
+
+if project == "1":
+    print("Please enter module id from below \n 1. Admin \n 2.Teacher")
+    module_id = input("Type Module id and press Enter : ")
+    if module_id == "1":
+        print("You logged in as Admin User. Please select any one of the below options ")
+        print(
+            "1. Add student details \n2. View student details \n3. Update student details \n4. Delete student details")
+        option = input("Type Operation Id and press Enter : ")
+        if option == "1":
+            add_student()
+        elif option == "2":
+            view_student()
+        elif option == "3":
+            update_student()
+        elif option == "4":
+            delete_student()
+        else:
+            print("Invalid Option. Please try again later... Thank You !!!")
+
+
+elif module_id == "2":
+    print("You logged in as Teacher User. Please select any one of the below options ")
+    print("1. Enter Marks \n2. Filter Failed Students")
+    option = input("Type Operation Id and press Enter : ")
+    if option == "1":
+        enter_marks()
+    elif option == "2":
+        filter_failed_students()
+    elif module_id == "2":
+        print("You logged in as Teacher User. Please select any one of the below options ")
+        print("1. Enter Marks \n2. Filter Failed Students")
+        option = input("Type Operation Id and press Enter : ")
+        if option == "1":
+            enter_marks()
+        elif option == "2":
+            filter_failed_students()
+        else:
+            print("Invalid Option. Please try again later... Thank You !!!")
+    else:
+        print("Invalid Option. Please try again later... Thank You !!!")
+elif project == "2":
+    project2.project2()
+else:
+    print("Invalid Option. Please try again later... Thank You !!!")
+    print("Invalid Option. Please try again later... Thank You !!!") 
+  43  
+module/dbconnection.py
+@@ -32,7 +32,7 @@ def fetch_student_details_by_id(student_id):
+    if len(result) != 0:
+        myresult = result[0]
+        details = module.studentdetails.StudentDetails(myresult[0], myresult[1], myresult[2], myresult[3], myresult[4],
+                                                       myresult[5], myresult[6])
+                                                       myresult[5], myresult[6], myresult[7])
+        return details
+    else:
+        return None
+@@ -69,18 +69,18 @@ def fetch_all_students():
+        for myresult in result:
+            list.append(
+                module.studentdetails.StudentDetails(myresult[0], myresult[1], myresult[2], myresult[3], myresult[4],
+                                                     myresult[5], myresult[6]))
+                                                     myresult[5], myresult[6], myresult[7]))
+        return list
+    else:
+        return None
+
+
+def enter_marks(student_id,exam, mark_details):
+def enter_marks(student_id, exam, mark_details):
+    mycurser = mydb.cursor()
+    sql = "INSERT INTO studentmgnt.student_marks ( student_id, exam_type, math, science, social, language) VALUES " \
+          "(%s, %s, %s, %s, %s, %s) "
+    val = (student_id,exam,mark_details.math,mark_details.science,mark_details.social,mark_details.language)
+    mycurser.execute(sql,val)
+    val = (student_id, exam, mark_details.math, mark_details.science, mark_details.social, mark_details.language)
+    mycurser.execute(sql, val)
+    mydb.commit()
+    return None
+
+@@ -103,9 +103,38 @@ def filter_failed_students(subject):
+        for myresult in result:
+            sub = module.subjects.Subject(myresult[3], myresult[4], myresult[5], myresult[6])
+            student = fetch_student_details_by_id(myresult[1])
+            if student is None :
+            if student is None:
+                continue
+            list.append(module.markdetails.MarkDetails(student, sub, myresult[2]))
+
+        return list
+    else:
+        return None
+
+
+def update_fee_paid(id, paid):
+    mycurser = mydb.cursor()
+    sql = "UPDATE studentmgnt.student_details SET fee_paid = %s WHERE student_id = %s "
+    val = (paid, id)
+    mycurser.execute(sql, val)
+    mydb.commit()
+    return None
+
+
+def fetch_marks_by_student_id(id):
+    mycursor = mydb.cursor()
+    sql = "SELECT * FROM studentmgnt.student_marks where student_id = %s"
+    val = (id,)
+    mycursor.execute(sql,val)
+    result = mycursor.fetchall()
+    if len(result) != 0:
+        list = []
+        for myresult in result:
+            sub = module.subjects.Subject(myresult[3], myresult[4], myresult[5], myresult[6])
+            student = fetch_student_details_by_id(myresult[1])
+            if student is None:
+                continue
+            list.append(module.markdetails.MarkDetails(student,sub,myresult[2]))
+            list.append(module.markdetails.MarkDetails(student, sub, myresult[2]))
+
+        return list
+    else:
+ 177  
+module/project2.py
+@@ -0,0 +1,177 @@
+from tkinter import *
+from tkinter import ttk
+
+import module.dbconnection
+
+
+def format_details(details):
+    if details is None:
+        return []
+    data = []
+    for x in details:
+        temp = []
+        temp.append(x.id)
+        temp.append(x.name)
+        temp.append(x.aadhar_card_number)
+        temp.append(x.parents_name)
+        temp.append(x.ph_number)
+        temp.append(x.class_name)
+        temp.append(x.section)
+        temp.append(x.fee_paid)
+        data.append(temp)
+    return data
+
+
+def format_mark_details(details):
+    if details is None:
+        return []
+    data = []
+    for x in details:
+        temp = []
+        temp.append(x.student.id)
+        temp.append(x.student.name)
+        temp.append(x.examtype)
+        temp.append(x.mark.math)
+        temp.append(x.mark.science)
+        temp.append(x.mark.social)
+        temp.append(x.mark.language)
+        data.append(temp)
+    return data
+
+
+def print_student_table(ws, data):
+    set = ttk.Treeview(ws)
+    set.pack()
+    set['columns'] = (
+        'id', 'name', 'aadhar_card_number', 'parents_name', 'ph_number', 'class_name', 'section', 'fee_paid')
+    set.column("#0", width=0, stretch=NO)
+    set.column("id", anchor=CENTER, width=80)
+    set.column("name", anchor=CENTER, width=80)
+    set.column("aadhar_card_number", anchor=CENTER, width=80)
+    set.column("parents_name", anchor=CENTER, width=80)
+    set.column("ph_number", anchor=CENTER, width=80)
+    set.column("class_name", anchor=CENTER, width=80)
+    set.column("section", anchor=CENTER, width=80)
+    set.column("fee_paid", anchor=CENTER, width=80)
+
+    set.heading("#0", text="", anchor=CENTER)
+    set.heading("id", text="Student ID", anchor=CENTER)
+    set.heading("name", text="Student Name", anchor=CENTER)
+    set.heading("aadhar_card_number", text="Aadhar Card Number", anchor=CENTER)
+    set.heading("parents_name", text="Parents Name", anchor=CENTER)
+    set.heading("ph_number", text="Phone Number", anchor=CENTER)
+    set.heading("class_name", text="Class Name", anchor=CENTER)
+    set.heading("section", text="Section", anchor=CENTER)
+    set.heading("fee_paid", text="Fee Paid", anchor=CENTER)
+
+    global count
+    count = 0
+    for record in data:
+        set.insert(parent='', index='end', iid=count, text='',
+                   values=(record[0], record[1], record[2], record[3], record[4], record[5], record[6], record[7]))
+        count += 1
+
+
+def view_student_details():
+    list = module.dbconnection.fetch_all_students()
+    data = format_details(list)
+    ws = Tk()
+    ws.title('Student Details')
+    ws.geometry('700x700')
+    print_student_table(ws, data)
+
+    Input_frame = Frame(ws)
+    Input_frame.pack()
+
+    id = Label(Input_frame, text="ID")
+    id.grid(row=0, column=0)
+
+    fee_paid = Label(Input_frame, text="Fees Paid ?")
+    fee_paid.grid(row=0, column=1)
+
+    id_entry = Entry(Input_frame)
+    id_entry.grid(row=1, column=0)
+
+    fee_paid_entry = Entry(Input_frame)
+    fee_paid_entry.grid(row=1, column=1)
+
+    def refresh():
+        ws.destroy()
+        view_student_details()
+
+    def input_record():
+        print("Updating fees paid details for student id : " + id_entry.get() + " Status : " + fee_paid_entry.get())
+        module.dbconnection.update_fee_paid(id_entry.get(), fee_paid_entry.get())
+        refresh()
+
+    # button
+    Input_button = Button(ws, text="Update", command=input_record)
+    Input_button.pack()
+    ws.mainloop()
+
+
+def print_mark_table(ws, data):
+    set = ttk.Treeview(ws)
+    set.pack()
+    set['columns'] = (
+        'id', 'name', 'exam', 'math', 'science', 'social', 'language')
+    set.column("#0", width=0, stretch=NO)
+    set.column("id", anchor=CENTER, width=80)
+    set.column("name", anchor=CENTER, width=80)
+    set.column("exam", anchor=CENTER, width=80)
+    set.column("math", anchor=CENTER, width=80)
+    set.column("science", anchor=CENTER, width=80)
+    set.column("social", anchor=CENTER, width=80)
+    set.column("language", anchor=CENTER, width=80)
+
+    set.heading("#0", text="", anchor=CENTER)
+    set.heading("id", text="Student ID", anchor=CENTER)
+    set.heading("name", text="Student Name", anchor=CENTER)
+    set.heading("exam", text="Exam Type", anchor=CENTER)
+    set.heading("math", text="Maths", anchor=CENTER)
+    set.heading("science", text="Science", anchor=CENTER)
+    set.heading("social", text="Social", anchor=CENTER)
+    set.heading("language", text="Language", anchor=CENTER)
+
+    global count
+    count = 0
+    for record in data:
+        set.insert(parent='', index='end', iid=count, text='',
+                   values=(record[0], record[1], record[2], record[3], record[4], record[5], record[5]))
+        count += 1
+
+
+def view_marks():
+    ws = Tk()
+    ws.title('Student Mark Details')
+    ws.geometry('700x700')
+
+    Input_frame = Frame(ws)
+    Input_frame.pack()
+
+    id = Label(Input_frame, text="Enter Student ID")
+    id.grid(row=0, column=0)
+
+    id_entry = Entry(Input_frame)
+    id_entry.grid(row=1, column=0)
+
+    def input_record():
+        list = module.dbconnection.fetch_marks_by_student_id(id_entry.get())
+        data = format_mark_details(list)
+        print_mark_table(ws, data)
+
+    # button
+    Input_button = Button(ws, text="Fetch Marks", command=input_record)
+    Input_button.pack()
+    ws.mainloop()
+
+
+def project2():
+    print("Please enter module id from below \n 1. Admin \n 2.Teacher")
+    module_id = input("Type Module id and press Enter : ")
+    if module_id == "1":
+        view_student_details()
+    elif module_id == "2":
+        view_marks()
+    else:
+        print("Invalid Option. Please try again later... Thank You !!!")
+ 3  
+module/studentdetails.py
+@@ -1,9 +1,10 @@
+class StudentDetails:
+    def __init__(self, id, name, aadhar_card_number, parents_name, ph_number, class_name, section):
+    def __init__(self, id, name, aadhar_card_number, parents_name, ph_number, class_name, section,fee_paid):
+        self.id = id
+        self.name = name
+        self.aadhar_card_number = aadhar_card_number
+        self.parents_name = parents_name
+        self.ph_number = ph_number
+        self.class_name = class_name
+        self.section = section
+        self.fee_paid = fee_paid
